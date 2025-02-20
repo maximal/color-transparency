@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Расчёт цвета с прозрачностью</title>
+	<style>
+		.result-color {
+			display: inline-block;
+			width: 4rem;
+			height: 2rem;
+		}
+
+		footer {
+			opacity: 0.1;
+			transition: opacity 1s linear;
+			padding: 0.5rem;
+			margin-top: 3rem;
+			border-top: 1px solid grey;
+		}
+
+		footer:hover {
+			opacity: 1;
+		}
+
+		.sijeko-link {
+			transition: color 1s linear;
+		}
+
+		.sijeko-link em {
+			transition: color 1s linear;
+		}
+
+		footer .sijeko-link:hover {
+			color: #ff7000;
+		}
+
+		.sijeko-link em {
+			color: #ff7000;
+			font-style: normal;
+		}
+
+		footer .sijeko-link:hover em {
+			color: blue;
+		}
+	</style>
+</head>
+<body>
+
+<main>
+	<h1>Расчёт цвета с прозрачностью</h1>
+	<section>
+		<label for="color">Цвет без прозрачности:</label>
+		<input type="color" name="color" id="color" value="#ff7f00"/>
+		&middot;
+		<code class="input-color-code" id="input-color-code"></code>
+		&middot;
+		<code class="input-color-code-rgb" id="input-color-code-rgb"></code>
+	</section>
+	<section>
+		<label for="opacity">Опасность:</label>
+		<input type="range" name="opacity" id="opacity" value="100" min="0" max="100" step="0.1"/>
+		<label for="opacity_num"></label>
+		<input type="number" name="opacity_num" id="opacity_num" value="100" min="0" max="100" step="0.1"/>
+	</section>
+	<section>
+		<p>
+			Цвет с прозрачностью на чёрном фоне:
+			<span class="result-color" id="result-color-on-black">&nbsp;</span>
+			&middot;
+			<code class="result-color-code" id="result-color-on-black-code"></code>
+			&middot;
+			<code class="result-color-code" id="result-color-on-black-code-rgb"></code>
+		</p>
+		<p>
+			Цвет с прозрачностью на белом фоне:
+			<span class="result-color" id="result-color-on-white">&nbsp;</span>
+			&middot;
+			<code class="result-color-code" id="result-color-on-white-code"></code>
+			&middot;
+			<code class="result-color-code" id="result-color-on-white-code-rgb"></code>
+		</p>
+	</section>
+</main>
+
+<footer>
+	<a href="https://maximals.ru/" target="_blank">MaximAL</a>
+	of&nbsp;<a href="https://sijeko.ru/" class="sijeko-link" target="_blank">Sij<em>e</em>ko</a>
+	2025
+	&middot;
+	<a href="https://github.com/maximal/color-transparency" target="_blank">GitHub</a>
+</footer>
+
+
+<script>
+	document.addEventListener('DOMContentLoaded', () => {
+		//var timeDrift = serverTime.getTime() - clientTime.getTime();
+		var inputColor = document.querySelector('input[name=color]');
+		var inputOpacity = document.querySelector('input[name=opacity]');
+		var inputOpacityNum = document.querySelector('input[name=opacity_num]');
+		var inputColorCodeElement = document.querySelector('#input-color-code');
+		var inputColorCodeRgbElement = document.querySelector('#input-color-code-rgb');
+		var resultColorOnBlackElement = document.querySelector('#result-color-on-black');
+		var resultColorOnBlackCodeElement = document.querySelector('#result-color-on-black-code');
+		var resultColorOnBlackCodeRgbElement = document.querySelector('#result-color-on-black-code-rgb');
+		var resultColorOnWhiteElement = document.querySelector('#result-color-on-white');
+		var resultColorOnWhiteCodeElement = document.querySelector('#result-color-on-white-code');
+		var resultColorOnWhiteCodeRgbElement = document.querySelector('#result-color-on-white-code-rgb');
+
+		inputOpacity.value = inputOpacityNum.value = 100;
+		var currentColor = inputColor.value;
+		var currentOpacity = inputOpacity.value;
+
+		inputColorCodeElement.textContent = currentColor;
+		inputColorCodeRgbElement.textContent = colorCodeToRgbString(
+			colorCodeToRgb(currentColor),
+		);
+
+		displayInputColorCodes();
+		calculateResult(currentColor, currentOpacity);
+
+		inputColor.addEventListener('input', function (event) {
+			currentColor = event.currentTarget.value;
+			// Показываем код выбранного цвета
+			displayInputColorCodes();
+			// Показываем результат расчёта
+			calculateResult(currentColor, currentOpacity);
+		});
+
+		inputOpacity.addEventListener('input', function (event) {
+			// Показываем выбранную опасность
+			currentOpacity = Math.min(Math.max(event.currentTarget.value, 0), 100);
+			inputOpacityNum.value = currentOpacity;
+			// Показываем результат расчёта
+			calculateResult(currentColor, currentOpacity);
+		});
+
+		inputOpacityNum.addEventListener('input', function (event) {
+			// Показываем выбранную опасность
+			currentOpacity = Math.min(Math.max(event.currentTarget.value, 0), 100);
+			inputOpacity.value = currentOpacity;
+			// Показываем результат расчёта
+			calculateResult(currentColor, currentOpacity);
+		});
+
+		function displayInputColorCodes() {
+			inputColorCodeElement.textContent = currentColor;
+			inputColorCodeRgbElement.textContent = colorCodeToRgbString(
+				colorCodeToRgb(currentColor),
+			);
+		}
+
+		function calculateResult(colorCode, opacity) {
+			// opacity: 0..100
+			opacity = Math.min(Math.max(opacity, 0), 100);
+
+			var rgbArray = colorCodeToRgb(colorCode);
+
+			var red = rgbArray[0];
+			var green = rgbArray[1];
+			var blue = rgbArray[2];
+
+			// Результирующий цвет на чёрном
+			var resultRedOnBlack = opacity * red / 100;
+			var resultGreenOnBlack = opacity * green / 100;
+			var resultBlueOnBlack = opacity * blue / 100;
+			var resultColorOnBlack = rgbToColorCode([resultRedOnBlack, resultGreenOnBlack, resultBlueOnBlack]);
+			// Отображаем результат на чёрном в разных формах
+			resultColorOnBlackElement.style.backgroundColor = resultColorOnBlack;
+			resultColorOnBlackCodeElement.textContent = resultColorOnBlack;
+			resultColorOnBlackCodeRgbElement.textContent = colorCodeToRgbString(
+				colorCodeToRgb(resultColorOnBlack),
+			);
+
+			// Результирующий цвет на белом
+			var resultRedOnWhite = 255 - opacity * (255 - red) / 100;
+			var resultGreenOnWhite = 255 - opacity * (255 - green) / 100;
+			var resultBlueOnWhite = 255 - opacity * (255 - blue) / 100;
+			var resultColorOnWhite = rgbToColorCode([resultRedOnWhite, resultGreenOnWhite, resultBlueOnWhite]);
+			// Отображаем результат на белом в разных формах
+			resultColorOnWhiteElement.style.backgroundColor = resultColorOnWhite;
+			resultColorOnWhiteCodeElement.textContent = resultColorOnWhite;
+			resultColorOnWhiteCodeRgbElement.textContent = colorCodeToRgbString(
+				colorCodeToRgb(resultColorOnWhite),
+			);
+		}
+
+		/**
+		 * Из кода цвета в виде #RRGGBB в массив [R, G, B].
+		 *
+		 * @param {string} colorCode
+		 * @returns {number[]}
+		 */
+		function colorCodeToRgb(colorCode) {
+			colorCode = colorCode.replace('#', '');
+			return [
+				parseInt('0x' + colorCode.substring(0, 2), 16),
+				parseInt('0x' + colorCode.substring(2, 4), 16),
+				parseInt('0x' + colorCode.substring(4, 6), 16),
+			];
+		}
+
+		/**
+		 * Из массива [R, G, B] в строку rgb(red, green, blue)
+		 *
+		 * @param {number[]} rgbArray
+		 * @returns {string}
+		 */
+		function colorCodeToRgbString(rgbArray) {
+			return 'rgb(' + rgbArray.join(', ') + ')';
+		}
+
+		/**
+		 * Из массива [R, G, B] в код цвета #RRGGBB.
+		 *
+		 * @param {number[]} rgbArray
+		 * @returns {string}
+		 */
+		function rgbToColorCode(rgbArray) {
+			var r = Math.round(rgbArray[0]).toString(16);
+			var g = Math.round(rgbArray[1]).toString(16);
+			var b = Math.round(rgbArray[2]).toString(16);
+			return '#' +
+				(r.length < 2 ? '0' : '') + r +
+				(g.length < 2 ? '0' : '') + g +
+				(b.length < 2 ? '0' : '') + b;
+		}
+	});
+</script>
+</body>
+</html>
